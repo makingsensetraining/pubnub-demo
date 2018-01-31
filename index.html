@@ -1,0 +1,90 @@
+<html>
+  <head>
+    <link href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" rel="stylesheet">
+
+    <style type="text/css">
+      body {
+        padding: 10px;
+      }
+      #chat-output {
+        height: 150px;
+        overflow-y: scroll;
+      }
+      .me {
+        font-weight: bold;
+      }
+
+    </style>
+  </head>
+  <body>
+    <div class="alert alert-info">You are <strong id="whoami"></strong></div>
+
+    <div class="panel panel-default">
+      <div class="panel-heading">Live Chat</div>
+      <ul class="list-group" id="chat-output"></ul>
+      <div class="panel-body">
+        <form id="chat">
+          <div class="input-group">
+            <input type="text" class="form-control" id="chat-input" />
+            <span class="input-group-btn">
+              <button type="submit" class="btn btn-default">Send Message</button>
+            </span>
+          </div>
+        </form>
+      </div>
+    </div>
+
+
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+    <script src=https://cdn.pubnub.com/sdk/javascript/pubnub.4.0.11.min.js></script>
+    <script>
+    (function(){
+      var pubnub = new PubNub({ publishKey : 'pub-c-d14ede36-292b-482d-a5f0-6693ed869320', subscribeKey : 'sub-c-8c8a113a-0676-11e8-a3ca-729d92310bb2' });
+      // generate a random username
+      var randomName = function() {
+        var animals = ['pigeon', 'seagull', 'bat', 'owl', 'sparrows', 'robin', 'bluebird', 'cardinal', 'hawk', 'fish', 'shrimp', 'frog', 'whale', 'shark', 'eel', 'seal', 'lobster', 'octopus', 'mole', 'shrew', 'rabbit', 'chipmunk', 'armadillo', 'dog', 'cat', 'lynx', 'mouse', 'lion', 'moose', 'horse', 'deer', 'raccoon', 'zebra', 'goat', 'cow', 'pig', 'tiger', 'wolf', 'pony', 'antelope', 'buffalo', 'camel', 'donkey', 'elk', 'fox', 'monkey', 'gazelle', 'impala', 'jaguar', 'leopard', 'lemur', 'yak', 'elephant', 'giraffe', 'hippopotamus', 'rhinoceros', 'grizzlybear']
+        var colors = ['silver', 'gray', 'black', 'red', 'maroon', 'olive', 'lime', 'green', 'teal', 'blue', 'navy', 'fuchsia', 'purple'];
+
+        return colors[Math.floor(Math.random() * colors.length)] + '_' + animals[Math.floor(Math.random() * animals.length)];
+      };
+
+      var me = randomName();
+      $('#whoami').text(me);
+
+      var $input = $('#chat-input'), $output = $('#chat-output'), channel = 'optimus-pubnub-demo';
+
+      pubnub.subscribe({channels:[channel]});
+
+      pubnub.addListener({
+        message: function(data) {
+          var $line = $('<li class="list-group-item"><strong>' + data.message.uuid + ':</strong> </span>');
+          var $message = $('<span class="text" />').text(data.message.text).html();
+
+          if(data.username == me) {
+            $line.addClass('me');
+          }
+
+          $line.append($message);
+          $output.append($line);
+
+          $output.scrollTop($output[0].scrollHeight);
+        }});
+
+
+      $('#chat').submit(function() {
+        pubnub.publish({
+          channel: channel,
+          message: {
+            text: $input.val(),
+            uuid: me
+          }
+        });
+
+        $input.val('');
+        return false;
+      });
+    })();
+  </script>
+  </body>
+</html>
